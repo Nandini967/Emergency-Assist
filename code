@@ -1,1 +1,67 @@
+from telethon import TelegramClient
+from telethon.tl.types import InputGeoPoint, InputMediaGeoLive
+import speech_recognition as sr
+import datetime
+import os
+import geocoder
+# Replace with your own values from my.telegram.org
+api_id = ''
+api_hash = ''
+phone = ''
+username = ''
+client = TelegramClient('session_name', api_id, api_hash)
+recognizer = sr.Recognizer()
 
+def generate_filename():
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    filename = f"{today}_EmeSOS.mp3"
+    return filename
+
+async def send_audio(audio_path):
+    await client.send_file(username, audio_path)
+    print("Audio sent successfully.") 
+
+async def listen_and_save_audio():
+    with sr.Microphone() as source:
+        audio = recognizer.listen(source)
+        await send_message(audio)
+        
+    try:
+        audio_file = generate_filename()
+        with open(audio_file, "wb") as f:
+            f.write(audio.get_wav_data())
+        return audio_file
+    except sr.UnknownValueError:
+        print("Could not understand audio")
+        return None
+    except sr.RequestError as e:
+        print(f"Could not request results from Google Speech Recognition service; {e}")
+        return None
+
+async def send_message(audio):
+    text = recognizer.recognize_google(audio, language='bn-IN')
+    await client.send_message(username, text)
+    print("Text message sent successfully.")
+
+async def send_location():
+
+    g = geocoder.ip('me')
+    lat, lon = g.latlng
+    geo_point = InputGeoPoint(lat=float(lat), long=float(lon))
+    geo_live = InputMediaGeoLive(geo_point=geo_point, period=28800)  # Broadcast location for 8 hours
+    recipient = await client.get_input_entity(username)
+    await client.send_file(recipient, geo_live, message="Here is my current location")
+    print("Location sent successfully!")
+
+async def main():
+    await client.start(phone=phone)
+
+    audio_path = await listen_and_save_audio()  
+    if audio_path:
+        await send_audio(audio_path)
+        os.remove(audio_path)
+    await send_location()
+
+if __name__ == "__main__":
+    with client:
+        client.loop.run_until_complete(main())

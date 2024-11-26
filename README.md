@@ -85,8 +85,5 @@ cd Emergency-Assist
     <li>Include an option to save chat logs for record-keeping.</li>
 </ul>
 
-<h2>License</h2>
-<p>This project is licensed under the MIT License. See the <code>LICENSE</code> file for details.</p>
-
 <h2>Contribution</h2>
 <p>Feel free to fork this repository, make your changes, and submit a pull request. For major changes, please open an issue first to discuss what you would like to change.</p>
